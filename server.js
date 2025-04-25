@@ -2,7 +2,6 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const mysql = require("mysql2");
-const bcrypt = require("bcrypt");
 const app = express();
 const PORT = 3000;
 
@@ -28,75 +27,29 @@ db.connect((err) => {
     console.log("Connected to MySQL Database.");
 });
 
-// POST route for signup (with password hashing)
-app.post("/api/signup", async (req, res) => {
+// POST route for signup (from server.js)
+app.post("/api/signup", (req, res) => {
     const { username, fname, lname, password } = req.body;
 
     if (!username || !fname || !lname || !password) {
         return res.status(400).send("All fields are required.");
     }
 
-    try {
-        // Hash the password with bcrypt
-        const hashedPassword = await bcrypt.hash(password, 10);
+    const sql = "INSERT INTO signup (username, fname, lname, password) VALUES (?, ?, ?, ?)";
+    const values = [username, fname, lname, password];
 
-        const sql = "INSERT INTO signup (username, fname, lname, password) VALUES (?, ?, ?, ?)";
-        const values = [username, fname, lname, hashedPassword];
+    db.query(sql, values, (err, result) => {
+        if (err) {
+            console.error("Database insert error:", err);
+            return res.status(500).send("Failed to store user.");
+        }
 
-        db.query(sql, values, (err, result) => {
-            if (err) {
-                console.error("Database insert error:", err);
-                return res.status(500).send("Failed to store user.");
-            }
-
-            console.log("User data inserted:", result.insertId);
-            res.status(200).send("User successfully registered and stored in database!");
-        });
-    } catch (error) {
-        console.error("Password hashing error:", error);
-        res.status(500).send("Failed to process signup.");
-    }
+        console.log("User data inserted:", result.insertId);
+        res.status(200).send("User successfully registered and stored in database!");
+    });
 });
 
-// POST route for login (password verification)
-app.post("/api/login", async (req, res) => {
-    const { username, password } = req.body;
-
-    if (!username || !password) {
-        return res.status(400).send("Username and password are required.");
-    }
-
-    try {
-        // Retrieve the stored hash for the username
-        const sql = "SELECT password FROM signup WHERE username = ?";
-        db.query(sql, [username], async (err, results) => {
-            if (err) {
-                console.error("Database query error:", err);
-                return res.status(500).send("Database error.");
-            }
-
-            if (results.length === 0) {
-                return res.status(401).send("Invalid username or password.");
-            }
-
-            const storedHash = results[0].password;
-
-            // Compare provided password with stored hash
-            const isMatch = await bcrypt.compare(password, storedHash);
-
-            if (isMatch) {
-                res.status(200).send("Login successful!");
-            } else {
-                res.status(401).send("Invalid username or password.");
-            }
-        });
-    } catch (error) {
-        console.error("Password verification error:", error);
-        res.status(500).send("Failed to process login.");
-    }
-});
-
-// POST route for customer
+// POST route for customer (from server1.js)
 app.post("/api/customer", (req, res) => {
     const { passport_id, name, email, contact } = req.body;
 
@@ -115,7 +68,7 @@ app.post("/api/customer", (req, res) => {
     });
 });
 
-// POST route for discounts
+// POST route for discounts (from server2.js)
 app.post("/api/discounts", (req, res) => {
     const { discountId, discountPercentage, description } = req.body;
 
@@ -136,7 +89,7 @@ app.post("/api/discounts", (req, res) => {
     });
 });
 
-// POST route for menu items
+// POST route for menu items (from server3.js)
 app.post("/api/menu", (req, res) => {
     const { foodId, name, price, description, specification, qty } = req.body;
 
