@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Menu</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .search-bar {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .search-bar input {
+      padding: 0.5rem;
+      font-size: 1rem;
+      border-radius: 5px;
+      border: none;
+      width: 200px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Food Menu</h1>
+  </header>
+
+  <nav>
+    <a href="index.html">Home</a> | 
+    <a href="cart.html">Go to Cart</a>
+  </nav>
+
+  <section class="section">
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="Search food..." oninput="filterMenu()">
+    </div>
+
+    <div class="menu-container" id="menu"></div>
+
+    <div class="add-form">
+      <h3>Add New Food Item</h3>
+      <input type="text" id="newName" placeholder="Name (e.g., 🧁 Cupcake)">
+      <input type="number" id="newPrice" placeholder="Price (e.g., 129)">
+      <input type="number" id="newFoodId" placeholder="Food ID (e.g., 11)">
+      <input type="text" id="Discription" placeholder="Discription">
+      <input type="text" id="Specification" placeholder="Type">
+      <input type="number" id="Quantity" placeholder="Qty (e.g., 15)">
+      <button onclick="addNewItem()">Add Item</button>
+    </div>
+  </section>
+
+  <footer>&copy; 2025 Quick & Smart Restaurant</footer>
+
+  <script>
+    let menuItems = [
+      { foodId: 1, menuId: 101, name: "🍕 Pizza", price: 299 },
+      { foodId: 2, menuId: 101, name: "🍔 Burger", price: 199 },
+      { foodId: 3, menuId: 101, name: "🥗 Salad", price: 149 },
+      { foodId: 4, menuId: 101, name: "🍝 Pasta", price: 249 },
+      { foodId: 5, menuId: 101, name: "🍛 Biryani", price: 199 },
+      { foodId: 6, menuId: 102, name: "🍩 Donut", price: 99 },
+      { foodId: 7, menuId: 102, name: "🥤 Soft Drink", price: 79 },
+      { foodId: 8, menuId: 102, name: "🍜 Noodles", price: 159 },
+      { foodId: 9, menuId: 102, name: "🍣 Sushi", price: 399 },
+      { foodId: 10, menuId: 103, name: "🧁 Cupcake", price: 129 },
+    ];
+
+    function filterMenu() {
+      const searchQuery = document.getElementById("searchInput").value.toLowerCase();
+      if (searchQuery === "") {
+        renderMenu(menuItems);
+        return;
+      }
+      const filteredMenu = menuItems.filter(item => item.name.toLowerCase().includes(searchQuery));
+      renderMenu(filteredMenu);
+    }
+
+    function renderMenu(items = menuItems) {
+      const menu = document.getElementById("menu");
+      menu.innerHTML = "";
+      items.forEach((item, index) => {
+        const div = document.createElement("div");
+        div.className = "card";
+        div.innerHTML = `${item.name} - ₹${item.price} <br>
+                         <small>Food ID: ${item.foodId}, Menu ID: ${item.menuId}</small><br>
+                         <button onclick="addToCart(${index})">Add to Cart</button>`;
+        menu.appendChild(div);
+      });
+    }
+
+    function addToCart(index) {
+      let cart = JSON.parse(localStorage.getItem("cart")) || [];
+      let item = menuItems[index];
+      let existing = cart.find(ci => ci.name === item.name);
+      if (existing) {
+        existing.qty++;
+      } else {
+        cart.push({ name: item.name, price: item.price, qty: 1, foodId: item.foodId });
+      }
+
+      localStorage.setItem("cart", JSON.stringify(cart));
+      alert(`${item.name} added to cart!`);
+    }
+
+    function addNewItem() {
+  const name = document.getElementById("newName").value.trim();
+  const price = parseFloat(document.getElementById("newPrice").value);
+  const foodId = parseInt(document.getElementById("newFoodId").value);
+  const description = document.getElementById("Discription").value.trim();
+  const specification = document.getElementById("Specification").value.trim();
+  const qty = parseInt(document.getElementById("Quantity").value);
+
+  if (!name || isNaN(price) || isNaN(foodId) || !description || !specification || isNaN(qty)) {
+    alert("Please fill all fields correctly.");
+    return;
+  }
+
+  const newItem = { name, price, foodId, description, specification, qty };
+
+  fetch("http://localhost:3000/api/menu", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(newItem)
+  })
+    .then(res => res.json())
+    .then(data => {
+      alert(data.message);
+
+      // Add to the menuItems array locally
+      menuItems.push({ foodId, menuId: 999, name, price }); // menuId can be adjusted if needed
+
+      // Re-render the menu to show the new item
+      renderMenu();
+
+      // Clear inputs
+      document.getElementById("newName").value = "";
+      document.getElementById("newPrice").value = "";
+      document.getElementById("newFoodId").value = "";
+      document.getElementById("Discription").value = "";
+      document.getElementById("Specification").value = "";
+      document.getElementById("Quantity").value = "";
+    })
+    .catch(err => {
+      console.error("Error adding menu item:", err);
+      alert("Failed to add menu item.");
+    });
+}
+
+
+    renderMenu();
+  </script>
+  <script src="server3.js"></script>
+</body>
+</html>
