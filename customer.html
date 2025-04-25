@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Customer Entry Form</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      --primary-color: #ff6600;
+      --secondary-color: #f8f8f8;
+      --dark-color: #333;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: var(--secondary-color);
+      padding: 20px;
+      margin: 0;
+    }
+
+    header, footer {
+      text-align: center;
+      padding: 10px;
+      background-color: var(--primary-color);
+      color: white;
+    }
+
+    nav {
+      margin: 10px;
+      text-align: center;
+    }
+
+    nav a {
+      text-decoration: none;
+      color: var(--primary-color);
+      font-weight: bold;
+      font-size: 1.1rem;
+    }
+
+    .form-container {
+      max-width: 600px;
+      margin: 30px auto;
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-container h2 {
+      text-align: center;
+      color: var(--dark-color);
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 6px;
+      color: var(--dark-color);
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+    }
+
+    button {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 100%;
+      font-size: 1rem;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background-color: #ff4d4d;
+    }
+
+    .success-message {
+      display: none;
+      text-align: center;
+      color: green;
+      font-weight: bold;
+      margin-top: 15px;
+    }
+    #foot{
+      background: black;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Customer Details</h1>
+  </header>
+
+  <nav>
+    <a href="index.html">Home</a>
+  </nav>
+
+  <section class="form-container">
+    <h2>Enter Customer Information</h2>
+    <form id="customerForm" method="POST" action="http://localhost:3000/submit">
+      <div class="form-group">
+        <label for="passport_id">Passport ID</label>
+        <input type="text" id="passport_id" name="passport_id" required>
+      </div>
+
+      <div class="form-group">
+        <label for="name">Name</label>
+        <input type="text" id="name" name="name" required>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" required>
+      </div>
+
+      <div class="form-group">
+        <label for="contact">Contact No</label>
+        <input type="tel" id="contact" name="contact" required pattern="[0-9]{10}">
+      </div>
+
+      <button type="submit">Submit</button>
+      <div class="success-message" id="successMessage">Customer information submitted successfully!</div>
+    </form>
+  </section>
+
+  <footer>
+    &copy; 2025 Quick & Smart Restaurant
+  </footer>
+
+  <script>
+    document.getElementById("customerForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+  
+      const passport = document.getElementById("passport_id").value.trim();
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const contact = document.getElementById("contact").value.trim();
+  
+      if (!passport || !name || !email || !contact) {
+        alert("Please fill out all fields.");
+        return;
+      }
+  
+      // Send data to the server
+      fetch('http://localhost:3000/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ passport_id: passport, name, email, contact })
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log(data);
+        document.getElementById("successMessage").style.display = "block";
+        document.getElementById("customerForm").reset();
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
+    });
+  </script>
+  
+  <script src="server1.js"></script>
+
+</body>
+</html>
