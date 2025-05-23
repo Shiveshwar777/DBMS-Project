@@ -349,8 +349,7 @@
         localStorage.setItem("paymentTax", tax);
         localStorage.setItem("paymentTotal", total);
 
-        alert("Order placed!\nProceeding to payment.");
-        localStorage.removeItem("cart");
+        // Redirect to payments.html
         window.location.href = "payments.html";
       }
 
