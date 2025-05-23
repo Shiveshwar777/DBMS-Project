@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Payments</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      .card {
+        border: 1px solid #ccc;
+        padding: 20px;
+        margin: 20px auto;
+        border-radius: 10px;
+        max-width: 700px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 15px;
+      }
+      th,
+      td {
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+        text-align: left;
+      }
+      th {
+        background-color: #f4f4f4;
+      }
+      .summary {
+        font-weight: bold;
+        text-align: right;
+      }
+      .form-container {
+        margin-bottom: 20px;
+      }
+      input[type="text"] {
+        padding: 8px;
+        width: 100%;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+      }
+      button {
+        padding: 10px 20px;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #45a049;
+      }
+      .discount-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 20px;
+        background: #f8f8f8;
+        padding: 18px 16px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(60, 180, 120, 0.07);
+        border: 1px solid #e0e0e0;
+        max-width: 400px;
+      }
+      .discount-group label {
+        margin-bottom: 0;
+        font-weight: 500;
+        color: #2d6a4f;
+        letter-spacing: 0.5px;
+      }
+      #enteredDiscountId {
+        padding: 10px 14px;
+        border: 2px solid #95d5b2;
+        border-radius: 6px;
+        font-size: 1rem;
+        outline: none;
+        transition: border-color 0.2s;
+        background: #f1faee;
+        color: #1b4332;
+        font-weight: 500;
+        width: 170px;
+      }
+      #enteredDiscountId:focus {
+        border-color: #40916c;
+        background: #e9f5ee;
+      }
+      #applyDiscountBtn {
+        padding: 10px 22px;
+        background: linear-gradient(90deg, #38b000 60%, #70e000 100%);
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        font-size: 1rem;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(56, 176, 0, 0.12);
+        transition: background 0.2s, transform 0.1s;
+        letter-spacing: 0.5px;
+      }
+      #applyDiscountBtn:hover,
+      #applyDiscountBtn:focus {
+        background: linear-gradient(90deg, #40916c 60%, #95d5b2 100%);
+        transform: translateY(-2px) scale(1.03);
+      }
+    </style>
+  </head>
+  <body>
+    <header><h1>Payment Summary</h1></header>
+    <nav><a href="index.html">Home</a></nav>
+
+    <section class="section">
+      <!-- Selection and Inputs -->
+      <div class="form-container">
+        <div class="discount-group">
+          <label for="enteredDiscountId">Enter Discount ID:</label>
+          <input type="text" id="enteredDiscountId" placeholder="e.g. DISC10" />
+          <button id="applyDiscountBtn" onclick="applyDiscountAndUpdate()">
+            Apply
+          </button>
+        </div>
+      </div>
+
+      <!-- Payment Summary -->
+      <div class="card" id="paymentSummary">Waiting for input...</div>
+
+      <!-- Delivery or Dine-in Cart -->
+      <div class="card" id="orderDetails">Order items will appear here...</div>
+    </section>
+
+    <footer>&copy; 2025 Quick & Smart Restaurant</footer>
+
+    <script>
+      // Generate a random 6-7 digit number
+      function generateUniqueNumber() {
+        return Math.floor(100000 + Math.random() * 9000000); // 6 to 7 digits
+      }
+
+      // Set Payment ID and Order No each time (for new payment)
+      localStorage.setItem("paymentId", generateUniqueNumber());
+      localStorage.setItem("orderNo", generateUniqueNumber());
+
+      async function applyDiscountAndUpdate() {
+        const enteredDiscountId = document
+          .getElementById("enteredDiscountId")
+          .value.trim();
+        let discountPercent = 0;
+        let discountTried = false;
+
+        if (enteredDiscountId) {
+          discountTried = true;
+          const response = await fetch("/api/discounts/consume", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ discountId: enteredDiscountId }),
+          });
+          const data = await response.json();
+          console.log("Discount API response:", data);
+          if (data.valid) {
+            discountPercent = parseFloat(data.percentage) || 0;
+          } else {
+            alert("Invalid or already used Discount ID!");
+            // Continue to update the summary with discountPercent = 0
+          }
+        }
+
+        // Load cart from localStorage (assuming only one cart for simplicity)
+        const cart = JSON.parse(localStorage.getItem("cart")) || [];
+        const orderDiv = document.getElementById("orderDetails");
+        if (cart.length === 0) {
+          orderDiv.innerHTML = "<p>No items found for this order.</p>";
+          // Still update payment summary
+          document.getElementById("paymentSummary").innerHTML = `<table>
+      <tr><th>Payment ID</th><td>${
+        localStorage.getItem("paymentId") || "Not Available"
+      }</td></tr>
+      <tr><th>Order No</th><td>${
+        localStorage.getItem("orderNo") || "Not Available"
+      }</td></tr>
+      <tr><th>Net Price</th><td>₹0</td></tr>
+      <tr><th>Tax</th><td>₹0</td></tr>
+      <tr><th>Discount</th><td>N/A</td></tr>
+      <tr><th>Total Payable</th><td><strong>₹0</strong></td></tr>
+    </table>`;
+          return;
+        }
+
+        // Calculate subtotal
+        let html =
+          "<table><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr>";
+        let subtotal = 0;
+        cart.forEach((item) => {
+          const quantity = item.qty || item.quantity || 0;
+          const total = quantity * item.price;
+          subtotal += total;
+          html += `<tr><td>${item.name}</td><td>${quantity}</td><td>₹${item.price}</td><td>₹${total}</td></tr>`;
+        });
+
+        const tax = Math.round(subtotal * 0.1);
+        let totalBeforeDiscount = subtotal + tax;
+        const discountAmount = Math.round(
+          totalBeforeDiscount * (discountPercent / 100)
+        );
+        const finalTotal = totalBeforeDiscount - discountAmount;
+
+        html += `<tr><td colspan="3" class="summary">Subtotal</td><td>₹${subtotal}</td></tr>`;
+        html += `<tr><td colspan="3" class="summary">Tax (10%)</td><td>₹${tax}</td></tr>`;
+        if (discountPercent > 0) {
+          html += `<tr><td colspan="3" class="summary">Discount (${discountPercent}%)</td><td>-₹${discountAmount}</td></tr>`;
+        }
+        html += `<tr><td colspan="3" class="summary"><strong>Total</strong></td><td><strong>₹${finalTotal}</strong></td></tr>`;
+        html += "</table>";
+
+        orderDiv.innerHTML = html;
+
+        // Payment Summary
+        const summaryDiv = document.getElementById("paymentSummary");
+        // Generate QR code URL with the final amount
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=&#8377;${encodeURIComponent(
+          finalTotal
+        )}`;
+        summaryDiv.innerHTML = `<table>
+    <tr><th>Payment ID</th><td>${
+      localStorage.getItem("paymentId") || "Not Available"
+    }</td></tr>
+    <tr><th>Order No</th><td>${
+      localStorage.getItem("orderNo") || "Not Available"
+    }</td></tr>
+    <tr><th>Net Price</th><td>₹${subtotal}</td></tr>
+    <tr><th>Tax</th><td>₹${tax}</td></tr>
+    <tr><th>Discount</th><td>${
+      discountPercent > 0 ? discountPercent + "%" : "N/A"
+    }</td></tr>
+    <tr><th>Total Payable</th><td><strong>₹${finalTotal}</strong></td></tr>
+    <tr><th>Pay via QR</th><td><img src="${qrUrl}" alt="QR Code for Payment" /></td></tr>
+  </table>`;
+      }
+
+      // Show cart on page load
+      document.addEventListener("DOMContentLoaded", function () {
+        applyDiscountAndUpdate();
+      });
+    </script>
+  </body>
+</html>
