@@ -1,155 +1,563 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Menu</title>
-  <link rel="stylesheet" href="style.css">
-  <style>
-    .search-bar {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-
-    .search-bar input {
-      padding: 0.5rem;
-      font-size: 1rem;
-      border-radius: 5px;
-      border: none;
-      width: 200px;
-    }
-  </style>
-</head>
-<body>
-  <header>
-    <h1>Food Menu</h1>
-  </header>
-
-  <nav>
-    <a href="index.html">Home</a> | 
-    <a href="cart.html">Go to Cart</a>
-  </nav>
-
-  <section class="section">
-    <div class="search-bar">
-      <input type="text" id="searchInput" placeholder="Search food..." oninput="filterMenu()">
-    </div>
-
-    <div class="menu-container" id="menu"></div>
-
-    <div class="add-form">
-      <h3>Add New Food Item</h3>
-      <input type="text" id="newName" placeholder="Name (e.g., 🧁 Cupcake)">
-      <input type="number" id="newPrice" placeholder="Price (e.g., 129)">
-      <input type="number" id="newFoodId" placeholder="Food ID (e.g., 11)">
-      <input type="text" id="Discription" placeholder="Discription">
-      <input type="text" id="Specification" placeholder="Type">
-      <input type="number" id="Quantity" placeholder="Qty (e.g., 15)">
-      <button onclick="addNewItem()">Add Item</button>
-    </div>
-  </section>
-
-  <footer>&copy; 2025 Quick & Smart Restaurant</footer>
-
-  <script>
-    let menuItems = [
-      { foodId: 1, menuId: 101, name: "🍕 Pizza", price: 299 },
-      { foodId: 2, menuId: 101, name: "🍔 Burger", price: 199 },
-      { foodId: 3, menuId: 101, name: "🥗 Salad", price: 149 },
-      { foodId: 4, menuId: 101, name: "🍝 Pasta", price: 249 },
-      { foodId: 5, menuId: 101, name: "🍛 Biryani", price: 199 },
-      { foodId: 6, menuId: 102, name: "🍩 Donut", price: 99 },
-      { foodId: 7, menuId: 102, name: "🥤 Soft Drink", price: 79 },
-      { foodId: 8, menuId: 102, name: "🍜 Noodles", price: 159 },
-      { foodId: 9, menuId: 102, name: "🍣 Sushi", price: 399 },
-      { foodId: 10, menuId: 103, name: "🧁 Cupcake", price: 129 },
-    ];
-
-    function filterMenu() {
-      const searchQuery = document.getElementById("searchInput").value.toLowerCase();
-      if (searchQuery === "") {
-        renderMenu(menuItems);
-        return;
+  <head>
+    <meta charset="UTF-8" />
+    <title>Menu</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      .search-bar {
+        text-align: center;
+        margin-bottom: 20px;
       }
-      const filteredMenu = menuItems.filter(item => item.name.toLowerCase().includes(searchQuery));
-      renderMenu(filteredMenu);
-    }
 
-    function renderMenu(items = menuItems) {
-      const menu = document.getElementById("menu");
-      menu.innerHTML = "";
-      items.forEach((item, index) => {
-        const div = document.createElement("div");
-        div.className = "card";
-        div.innerHTML = `${item.name} - ₹${item.price} <br>
-                         <small>Food ID: ${item.foodId}, Menu ID: ${item.menuId}</small><br>
-                         <button onclick="addToCart(${index})">Add to Cart</button>`;
-        menu.appendChild(div);
+      .search-bar input {
+        padding: 0.5rem;
+        font-size: 1rem;
+        border-radius: 5px;
+        border: none;
+        width: 200px;
+      }
+
+      .add-form {
+        margin-top: 30px;
+        padding: 1rem;
+        background-color: #f5f5f5;
+        border-radius: 10px;
+        max-width: 400px;
+        margin-left: auto;
+        margin-right: auto;
+        display: none; /* Initially hidden */
+      }
+      .add-form h2 {
+        text-align: center;
+      }
+
+      .add-form input,
+      .add-form textarea {
+        display: block;
+        width: 100%;
+        padding: 0.5rem;
+        margin: 0.5rem 0;
+        font-size: 1rem;
+      }
+      .add-form button {
+        margin-left: 35%;
+        margin-top: 10px;
+        padding: 8px 16px;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+
+      .menu-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+        margin-top: 20px;
+      }
+
+      .card {
+        width: 80%;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background-color: #f9f9f9;
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .item-details {
+        text-align: left;
+        flex-grow: 1;
+      }
+
+      .qty-controls {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        margin-right: 15px;
+      }
+
+      .qty-controls button {
+        padding: 5px 10px;
+        font-size: 16px;
+        cursor: pointer;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        background-color: #eee;
+      }
+
+      .qty-controls span {
+        font-weight: bold;
+        min-width: 20px;
+        text-align: center;
+        display: inline-block;
+      }
+
+      .add-to-cart-btn {
+        padding: 8px 15px;
+        font-size: 1rem;
+        cursor: pointer;
+        background-color: #5cb85c;
+        color: white;
+        border: none;
+        border-radius: 5px;
+      }
+
+      /* New styles for category display */
+      .category-header {
+        width: 80%;
+        margin: 20px auto 10px;
+        padding-bottom: 5px;
+        border-bottom: 2px solid #4caf50;
+      }
+
+      .category-header h2 {
+        margin: 0;
+        color: #333;
+        font-size: 1.5rem;
+      }
+
+      .category-container {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+
+      .loading,
+      .error {
+        padding: 20px;
+        text-align: center;
+        color: #666;
+        font-style: italic;
+      }
+
+      .error {
+        color: #e74c3c;
+      }
+
+      .description {
+        color: #555;
+        font-size: 0.9rem;
+        margin: 5px 0;
+      }
+
+      .specification {
+        color: #777;
+        font-size: 0.8rem;
+        font-style: italic;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Food Menu</h1>
+    </header>
+    <nav>
+      <a href="index.html">Home</a> | <a href="cart.html">Go to Cart</a>
+    </nav>
+    <section class="section">
+      <div class="search-bar">
+        <input
+          type="text"
+          id="searchInput"
+          placeholder="Search food..."
+          oninput="filterMenu()"
+        />
+      </div>
+
+      <div id="adminAddForm" class="add-form">
+        <h2>Add New Menu Item</h2>
+        <input type="number" id="foodId" placeholder="Food ID" />
+        <input type="number" id="menuId" placeholder="Menu ID" />
+        <input type="text" id="name" placeholder="Food Name" />
+        <textarea id="description" placeholder="Description"></textarea>
+        <textarea id="specification" placeholder="Specification"></textarea>
+        <input type="number" id="price" placeholder="Price" />
+        <input type="number" id="quantity" placeholder="Quantity" />
+        <input type="text" id="category" placeholder="Category" />
+        <button onclick="addMenuItem()">Add Item</button>
+      </div>
+
+      <div class="menu-container" id="menu-container"></div>
+    </section>
+
+    <script>
+      // Initialize empty array - will be populated from database
+      let menuItems = [];
+
+      // This function is no longer used - we're displaying items directly
+      // without categorization
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const token = localStorage.getItem("token");
+        const role = localStorage.getItem("role");
+        if (token && role === "admin") {
+          document.getElementById("adminAddForm").style.display = "block";
+        } else {
+          document.getElementById("adminAddForm").style.display = "none";
+        }
+
+        // Show loading indicator
+        const menuContainer = document.getElementById("menu-container");
+        menuContainer.innerHTML =
+          "<p class='loading'>Loading food items...</p>";
+
+        // Fetch data from the API - simplified to just get food items
+        fetch("http://localhost:3000/api/food")
+          .then((res) => {
+            if (!res.ok) {
+              console.error("Server responded with status:", res.status);
+              throw new Error(
+                `Failed to fetch food items. Status: ${res.status}`
+              );
+            }
+            return res.json();
+          })
+          .then((data) => {
+            console.log("Fetched food items (raw data):", JSON.stringify(data));
+
+            if (!data || data.length === 0) {
+              console.warn("No food items returned from API");
+              menuContainer.innerHTML =
+                "<p class='error'>No food items found. Please add some items or check the database.</p>";
+              return;
+            }
+
+            console.log("Fetched food items count:", data.length);
+
+            // Debug: Check the structure of the first item
+            if (data.length > 0) {
+              console.log("First item structure:", data[0]);
+            }
+
+            // Directly map the data with explicit debugging
+            menuItems = data.map((item) => {
+              console.log("Processing item:", item);
+
+              // Create a simple object with the fields we need
+              const menuItem = {
+                foodId: item.Food_id,
+                name: item.Name,
+                price: parseFloat(item.Price),
+                description: item.Description || "",
+                specification: item.Specification || "",
+                qty: item.Qty || 0,
+              };
+
+              console.log("Mapped to menu item:", menuItem);
+              return menuItem;
+            });
+
+            // Render the menu items directly without categorization
+            renderMenu(menuItems);
+          })
+          .catch((err) => {
+            console.error("Menu fetch failed:", err);
+            menuContainer.innerHTML =
+              "<p class='error'>Failed to load food items. Please try again later.</p>";
+
+            // No fallback items - only show what's in the database
+            menuItems = [];
+          });
       });
-    }
 
-    function addToCart(index) {
-      let cart = JSON.parse(localStorage.getItem("cart")) || [];
-      let item = menuItems[index];
-      let existing = cart.find(ci => ci.name === item.name);
-      if (existing) {
-        existing.qty++;
-      } else {
-        cart.push({ name: item.name, price: item.price, qty: 1, foodId: item.foodId });
+      // This function has been removed as we're not categorizing items anymore
+
+      // Render a list of menu items
+      function renderMenu(menu, container = null) {
+        const menuContainer =
+          container || document.getElementById("menu-container");
+
+        if (!container) {
+          menuContainer.innerHTML = "";
+        }
+
+        // Check if menu is empty
+        if (!menu || menu.length === 0) {
+          menuContainer.innerHTML =
+            "<p class='error'>No food items to display.</p>";
+          return;
+        }
+
+        console.log("Rendering menu items:", menu);
+
+        menu.forEach((item) => {
+          try {
+            // Skip items with missing essential data
+            if (!item || !item.name || !item.price) {
+              console.warn("Skipping invalid menu item:", item);
+              return;
+            }
+
+            const card = document.createElement("div");
+            card.className = "card";
+
+            const itemDetails = document.createElement("div");
+            itemDetails.className = "item-details";
+
+            // Include description and specification if available
+            // Make sure price is a number before using toFixed
+            const price =
+              typeof item.price === "number"
+                ? item.price.toFixed(2)
+                : parseFloat(item.price || 0).toFixed(2);
+
+            // Only show name and price
+            itemDetails.innerHTML = `
+                          <h3>${item.name}</h3>
+                          <p class="price">Price: ₹${price}</p>
+                        `;
+
+            const qtyControls = document.createElement("div");
+            qtyControls.className = "qty-controls";
+            qtyControls.innerHTML = `
+                        <button onclick="decreaseQuantity(this)">-</button>
+                        <span>0</span>
+                        <button onclick="increaseQuantity(this)">+</button>
+                      `;
+
+            const addToCartBtn = document.createElement("button");
+            addToCartBtn.className = "add-to-cart-btn";
+            addToCartBtn.textContent = "Add to Cart";
+            addToCartBtn.onclick = () => addToCart(item, card);
+
+            card.appendChild(itemDetails);
+            card.appendChild(qtyControls);
+            card.appendChild(addToCartBtn);
+            menuContainer.appendChild(card);
+          } catch (error) {
+            console.error("Error rendering menu item:", error, item);
+          }
+        });
       }
 
-      localStorage.setItem("cart", JSON.stringify(cart));
-      alert(`${item.name} added to cart!`);
-    }
+      function increaseQuantity(button) {
+        const span = button.parentNode.querySelector("span");
+        span.textContent = parseInt(span.textContent) + 1;
+      }
 
-    function addNewItem() {
-  const name = document.getElementById("newName").value.trim();
-  const price = parseFloat(document.getElementById("newPrice").value);
-  const foodId = parseInt(document.getElementById("newFoodId").value);
-  const description = document.getElementById("Discription").value.trim();
-  const specification = document.getElementById("Specification").value.trim();
-  const qty = parseInt(document.getElementById("Quantity").value);
+      function decreaseQuantity(button) {
+        const span = button.parentNode.querySelector("span");
+        let qty = parseInt(span.textContent);
+        if (qty > 0) span.textContent = qty - 1;
+      }
 
-  if (!name || isNaN(price) || isNaN(foodId) || !description || !specification || isNaN(qty)) {
-    alert("Please fill all fields correctly.");
-    return;
-  }
+      let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
-  const newItem = { name, price, foodId, description, specification, qty };
+      function addToCart(item, card) {
+        const quantity = parseInt(
+          card.querySelector(".qty-controls span").textContent
+        );
+        if (quantity === 0) return alert("Please select a quantity.");
 
-  fetch("http://localhost:3000/api/menu", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(newItem)
-  })
-    .then(res => res.json())
-    .then(data => {
-      alert(data.message);
+        const existing = cart.find((i) => i.foodId === item.foodId);
+        if (existing) {
+          // Use qty property for consistency
+          existing.qty = (existing.qty || existing.quantity || 0) + quantity;
+          // Remove quantity property if it exists
+          delete existing.quantity;
+        } else {
+          // Add with qty property instead of quantity
+          cart.push({
+            ...item,
+            qty: quantity,
+          });
+        }
 
-      // Add to the menuItems array locally
-      menuItems.push({ foodId, menuId: 999, name, price }); // menuId can be adjusted if needed
+        localStorage.setItem("cart", JSON.stringify(cart));
+        alert(`${quantity} ${item.name}(s) added to cart.`);
+        card.querySelector(".qty-controls span").textContent = 0;
+      }
 
-      // Re-render the menu to show the new item
-      renderMenu();
+      function filterMenu() {
+        const search = document
+          .getElementById("searchInput")
+          .value.toLowerCase();
 
-      // Clear inputs
-      document.getElementById("newName").value = "";
-      document.getElementById("newPrice").value = "";
-      document.getElementById("newFoodId").value = "";
-      document.getElementById("Discription").value = "";
-      document.getElementById("Specification").value = "";
-      document.getElementById("Quantity").value = "";
-    })
-    .catch(err => {
-      console.error("Error adding menu item:", err);
-      alert("Failed to add menu item.");
-    });
-}
+        // If search is empty, show all items
+        if (!search.trim()) {
+          renderMenu(menuItems);
+          return;
+        }
 
+        // Filter items by name
+        const filtered = menuItems.filter((item) =>
+          item.name.toLowerCase().includes(search)
+        );
 
-    renderMenu();
-  </script>
-  <script src="server3.js"></script>
-</body>
+        // Render filtered items
+        renderMenu(filtered);
+      }
+
+      function addMenuItem() {
+        const foodId = parseInt(document.getElementById("foodId").value);
+        const menuId = parseInt(document.getElementById("menuId").value);
+        const name = document.getElementById("name").value;
+        const description = document.getElementById("description").value;
+        const specification = document.getElementById("specification").value;
+        const price = parseFloat(document.getElementById("price").value);
+        const quantity = parseInt(document.getElementById("quantity").value);
+        const category = document.getElementById("category").value;
+
+        if (
+          !foodId ||
+          !menuId ||
+          !name ||
+          !description ||
+          !specification ||
+          !price ||
+          !quantity ||
+          !category
+        ) {
+          return alert("Please fill in all fields.");
+        }
+
+        fetch("http://localhost:3000/api/food", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + localStorage.getItem("token"),
+          },
+          body: JSON.stringify({
+            Food_id: foodId,
+            Name: name,
+            Price: price,
+            Description: description,
+            Specification: specification,
+            Qty: quantity,
+            Menu_id: menuId,
+            Category: category,
+          }),
+        })
+          .then(async (res) => {
+            const text = await res.text(); // Use .text() to log raw response
+            console.log("Raw response:", text); // Log raw response
+
+            try {
+              const data = JSON.parse(text); // Try to parse as JSON
+
+              if (!res.ok) {
+                console.error("Server error:", data);
+
+                // Handle specific error types
+                if (res.status === 409) {
+                  // Duplicate key errors
+                  if (data.error === "duplicate_primary_key") {
+                    alert(
+                      "Error: " +
+                        data.message +
+                        " Please use a different Food ID."
+                    );
+                  } else if (data.error === "duplicate_menu_key") {
+                    alert(
+                      "Error: " +
+                        data.message +
+                        " Please use a different Menu ID or Food ID combination."
+                    );
+                  } else {
+                    alert(
+                      "Error: Duplicate entry. Please check your information and try again."
+                    );
+                  }
+                } else if (res.status === 403) {
+                  alert("Error: Admin access required to add menu items.");
+                } else {
+                  // Other server errors
+                  alert(
+                    "Error: " + (data.message || "Failed to add menu item")
+                  );
+                }
+
+                throw new Error(data.message || "Failed to add menu item");
+              }
+
+              alert(data.message); // Show success message
+
+              // Add the new item to the menu items array with all fields
+              const newItem = {
+                foodId,
+                name,
+                price,
+                description,
+                specification,
+                qty: quantity,
+              };
+
+              menuItems.push(newItem);
+
+              // Re-fetch the menu items to ensure we have the latest data
+              fetch("http://localhost:3000/api/food")
+                .then((res) => res.json())
+                .then((data) => {
+                  // Directly map the data with the same approach as the main fetch
+                  menuItems = data.map((item) => {
+                    // Create a simple object with the fields we need
+                    return {
+                      foodId: item.Food_id,
+                      name: item.Name,
+                      price: parseFloat(item.Price),
+                      description: item.Description || "",
+                      specification: item.Specification || "",
+                      qty: item.Qty || 0,
+                    };
+                  });
+
+                  // Re-render the menu
+                  renderMenu(menuItems);
+                })
+                .catch((err) => {
+                  console.error("Error refreshing menu:", err);
+                  // If refresh fails, just use our local data
+                  renderMenu(menuItems);
+                });
+
+              console.log("Menu updated with new item:", newItem);
+            } catch (err) {
+              // If JSON parsing fails or there's an error in the response
+              console.error("Error processing response:", err);
+
+              if (!res.ok) {
+                // Error already handled above
+                return;
+              }
+
+              // Handle parsing errors or other unexpected issues
+              if (text.includes("ER_DUP_ENTRY")) {
+                alert(
+                  "Error: A food item with this ID already exists. Please use a different ID."
+                );
+              } else if (text.includes("ER_NO_REFERENCED_ROW")) {
+                alert(
+                  "Error: Referenced row doesn't exist. Check your Food ID and Menu ID."
+                );
+              } else {
+                alert("Error: " + (err.message || "Unknown error occurred"));
+              }
+            }
+          })
+          .catch((err) => {
+            console.error("Network or fetch error:", err);
+            alert("Error: " + err.message);
+          });
+
+        // Clear input fields after submission
+        document.getElementById("foodId").value = "";
+        document.getElementById("menuId").value = "";
+        document.getElementById("name").value = "";
+        document.getElementById("description").value = "";
+        document.getElementById("specification").value = "";
+        document.getElementById("price").value = "";
+        document.getElementById("quantity").value = "";
+        document.getElementById("category").value = "";
+      }
+    </script>
+  </body>
 </html>
