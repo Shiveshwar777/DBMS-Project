@@ -1,114 +1,287 @@
-const express = require("express");
-const bodyParser = require("body-parser");
-const cors = require("cors");
-const mysql = require("mysql2");
-const app = express();
-const PORT = 3000;
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Customer Entry Form</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      :root {
+        --primary-color: #ff6600;
+        --secondary-color: #f8f8f8;
+        --dark-color: #333;
+      }
 
-// Middleware
-app.use(cors());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.json());
+      body {
+        font-family: Arial, sans-serif;
+        background: var(--secondary-color);
+        padding: 20px;
+        margin: 0;
+      }
 
-// MySQL connection
-const db = mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    password: "Mysql7",
-    database: "RestaurantDB"
-});
+      header,
+      footer {
+        text-align: center;
+        padding: 10px;
+        background-color: var(--primary-color);
+        color: white;
+      }
 
-db.connect((err) => {
-    if (err) {
-        console.error("MySQL connection error:", err);
-        return;
-    }
-    console.log("Connected to MySQL Database.");
-});
+      nav {
+        margin: 10px;
+        text-align: center;
+      }
 
-// POST route for signup (from server.js)
-app.post("/api/signup", (req, res) => {
-    const { username, fname, lname, password } = req.body;
+      nav a {
+        text-decoration: none;
+        color: var(--primary-color);
+        font-weight: bold;
+        font-size: 1.1rem;
+      }
 
-    if (!username || !fname || !lname || !password) {
-        return res.status(400).send("All fields are required.");
-    }
+      .form-container {
+        max-width: 600px;
+        margin: 30px auto;
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
 
-    const sql = "INSERT INTO signup (username, fname, lname, password) VALUES (?, ?, ?, ?)";
-    const values = [username, fname, lname, password];
+      .form-container h2 {
+        text-align: center;
+        color: var(--dark-color);
+        margin-bottom: 20px;
+      }
 
-    db.query(sql, values, (err, result) => {
-        if (err) {
-            console.error("Database insert error:", err);
-            return res.status(500).send("Failed to store user.");
-        }
+      .form-group {
+        margin-bottom: 15px;
+      }
 
-        console.log("User data inserted:", result.insertId);
-        res.status(200).send("User successfully registered and stored in database!");
-    });
-});
+      .form-group label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 6px;
+        color: var(--dark-color);
+      }
 
-// POST route for customer (from server1.js)
-app.post("/api/customer", (req, res) => {
-    const { passport_id, name, email, contact } = req.body;
+      .form-group input {
+        width: 100%;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        font-size: 1rem;
+      }
 
-    if (!passport_id || !name || !email || !contact) {
-        return res.status(400).send("All fields are required.");
-    }
+      button {
+        background-color: var(--primary-color);
+        color: white;
+        padding: 12px 20px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        width: 100%;
+        font-size: 1rem;
+        margin-top: 10px;
+      }
 
-    const sql = "INSERT INTO customer (passport_id, name, email, Contact_No) VALUES (?, ?, ?, ?)";
-    db.query(sql, [passport_id, name, email, contact], (err, result) => {
-        if (err) {
-            console.error("Error inserting data:", err.message);
-            res.status(500).send("Database insertion error");
-        } else {
-            res.status(200).send("Customer data inserted successfully");
-        }
-    });
-});
+      button:hover {
+        background-color: #ff4d4d;
+      }
 
-// POST route for discounts (from server2.js)
-app.post("/api/discounts", (req, res) => {
-    const { discountId, discountPercentage, description } = req.body;
+      .success-message {
+        display: none;
+        text-align: center;
+        color: green;
+        font-weight: bold;
+        margin-top: 15px;
+      }
+      #foot {
+        background: black;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Customer Details</h1>
+    </header>
 
-    if (!discountId || !discountPercentage || !description) {
-        return res.status(400).json({ message: "All fields are required." });
-    }
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="customers.html" id="customerNav">Customers</a>
+    </nav>
 
-    const sql = "INSERT INTO discounts (Discount_id, Discount_Percentage, Description) VALUES (?, ?, ?)";
-    db.query(sql, [discountId, discountPercentage, description], (err, result) => {
-        if (err) {
-            if (err.code === "ER_DUP_ENTRY") {
-                return res.status(409).json({ message: "Discount ID already exists." });
+    <section class="form-container">
+      <h2>Enter Customer Information</h2>
+      <form id="customerForm" method="POST">
+        <div class="form-group">
+          <label for="passport_id">Passport ID</label>
+          <input type="text" id="passport_id" name="passport_id" required />
+        </div>
+
+        <div class="form-group">
+          <label for="name">Name</label>
+          <input type="text" id="name" name="name" required />
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" required />
+        </div>
+
+        <div class="form-group">
+          <label for="contact">Contact No</label>
+          <input
+            type="tel"
+            id="contact"
+            name="contact"
+            required
+            pattern="[0-9]{10}"
+          />
+        </div>
+
+        <button type="submit">Submit</button>
+        <div class="success-message" id="successMessage">
+          Customer information submitted successfully!
+        </div>
+      </form>
+    </section>
+
+    <footer>&copy; 2025 Quick & Smart Restaurant</footer>
+
+    <script>
+      const userRole = localStorage.getItem("role");
+      const userId = localStorage.getItem("userId");
+      if (!userId) {
+        window.location.href = "Login.html";
+      }
+      const customerDetailsKey = `customerDetailsFilled_${userId}`;
+      const customerDetailsFilled = localStorage.getItem(customerDetailsKey);
+
+      function hideCustomerNav() {
+        const navLink = document.getElementById("customerNav");
+        if (navLink) navLink.style.display = "none";
+      }
+
+      // Redirect admin users back to index page
+      if (userRole === "admin") {
+        window.location.href = "index.html";
+        throw new Error("Admin users should not access this page");
+      }
+
+      // Check if user has already filled out customer details
+      if (customerDetailsFilled === "true") {
+        hideCustomerNav();
+        window.location.href = "index.html";
+      }
+
+      // Double-check with the server if this user has filled details
+      const token = localStorage.getItem("token");
+      if (token && userId) {
+        fetch(
+          `http://localhost:3000/api/customer/check?userId=${encodeURIComponent(
+            userId
+          )}`,
+          {
+            headers: {
+              Authorization: "Bearer " + token,
+            },
+          }
+        )
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.hasFilledDetails) {
+              localStorage.setItem(customerDetailsKey, "true");
+              hideCustomerNav();
+              window.location.href = "index.html";
             }
-            console.error("Insert failed:", err);
-            return res.status(500).json({ message: "Database error." });
-        }
-        res.status(201).json({ message: "Discount added to database." });
-    });
-});
+          })
+          .catch((error) => {
+            console.error("Error checking customer details:", error);
+          });
+      }
 
-// POST route for menu items (from server3.js)
-app.post("/api/menu", (req, res) => {
-    const { foodId, name, price, description, specification, qty } = req.body;
+      // Hide Customers nav on all pages if details are filled
+      if (customerDetailsFilled === "true") {
+        hideCustomerNav();
+      }
 
-    if (!foodId || !name || !price || !description || !specification || !qty) {
-        return res.status(400).json({ message: "All fields are required." });
-    }
+      document
+        .getElementById("customerForm")
+        .addEventListener("submit", function (e) {
+          e.preventDefault();
 
-    const sql = "INSERT INTO food (Food_id, Name, Price, Description, Specification, Qty) VALUES (?, ?, ?, ?, ?, ?)";
-    db.query(sql, [foodId, name, price, description, specification, qty], (err, result) => {
-        if (err) {
-            console.error("Error inserting item:", err);
-            return res.status(500).json({ message: "Database insert failed." });
-        }
+          const passport = document.getElementById("passport_id").value.trim();
+          const name = document.getElementById("name").value.trim();
+          const email = document.getElementById("email").value.trim();
+          const contact = document.getElementById("contact").value.trim();
 
-        res.json({ message: "Food item added successfully!" });
-    });
-});
+          if (!passport || !name || !email || !contact) {
+            alert("Please fill out all fields.");
+            return;
+          }
 
-// Start server
-app.listen(PORT, () => {
-    console.log(`Server running at http://localhost:${PORT}`);
-});
+          fetch("http://localhost:3000/api/customer", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              passport_id: passport,
+              name,
+              email,
+              contact,
+              userId,
+            }),
+          })
+            .then(async (response) => {
+              const data = await response.json();
+
+              if (!response.ok) {
+                if (response.status === 409) {
+                  if (data.error === "duplicate_primary_key") {
+                    alert(
+                      "Error: " +
+                        data.message +
+                        " Please use a different Passport ID."
+                    );
+                  } else if (data.error === "duplicate_email") {
+                    alert(
+                      "Error: " +
+                        data.message +
+                        " Please use a different Email address."
+                    );
+                  } else {
+                    alert(
+                      "Error: Duplicate entry. Please check your information and try again."
+                    );
+                  }
+                } else {
+                  alert(
+                    "Error: " +
+                      (data.message ||
+                        "Something went wrong. Please try again.")
+                  );
+                }
+                throw new Error(data.message || "Server error");
+              }
+
+              return data;
+            })
+            .then((data) => {
+              localStorage.setItem(customerDetailsKey, "true");
+              hideCustomerNav();
+              document.getElementById("successMessage").style.display = "block";
+              document.getElementById("customerForm").reset();
+
+              setTimeout(() => {
+                window.location.href = "index.html";
+              }, 2000);
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+            });
+        });
+    </script>
+  </body>
+</html>
