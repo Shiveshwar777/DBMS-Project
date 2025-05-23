@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Cart</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      .card {
+        border: 1px solid #ccc;
+        padding: 20px;
+        margin: 20px auto;
+        border-radius: 10px;
+        max-width: 700px;
+        background: #fff;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 15px;
+      }
+      th,
+      td {
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+        text-align: left;
+      }
+      th {
+        background-color: #f4f4f4;
+      }
+      .summary {
+        font-weight: bold;
+        text-align: right;
+      }
+      /* Fancy radio buttons */
+      .order-type-group {
+        display: flex;
+        gap: 30px;
+        margin-bottom: 18px;
+      }
+      .order-type-label {
+        position: relative;
+        padding-left: 32px;
+        cursor: pointer;
+        font-size: 1.1em;
+        user-select: none;
+        transition: color 0.2s;
+      }
+      .order-type-label input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+      }
+      .order-type-label .custom-radio {
+        position: absolute;
+        left: 0;
+        top: 2px;
+        height: 20px;
+        width: 20px;
+        background-color: #eee;
+        border-radius: 50%;
+        border: 2px solid #bbb;
+        transition: border-color 0.2s;
+      }
+      .order-type-label input[type="radio"]:checked ~ .custom-radio {
+        background-color: #4caf50;
+        border-color: #388e3c;
+      }
+      .order-type-label .custom-radio:after {
+        content: "";
+        position: absolute;
+        display: none;
+      }
+      .order-type-label input[type="radio"]:checked ~ .custom-radio:after {
+        display: block;
+      }
+      .order-type-label .custom-radio:after {
+        top: 5px;
+        left: 5px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: white;
+        position: absolute;
+        content: "";
+      }
+      /* Fancy form sections */
+      #deliveryForm,
+      #tableForm {
+        margin: 10px 0 18px 0;
+        padding: 15px 18px;
+        border-radius: 8px;
+        background: #f9f9f9;
+        border: 1px solid #e0e0e0;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+        transition: all 0.3s;
+      }
+      #deliveryForm[hidden],
+      #tableForm[hidden] {
+        display: none !important;
+      }
+      #address,
+      #tableNumber {
+        width: 100%;
+        padding: 8px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        margin-top: 6px;
+        font-size: 1em;
+        box-sizing: border-box;
+      }
+      .form-section button {
+        display: inline-block;
+        min-width: 170px;
+        margin: 8px 10px 0 0;
+        padding: 12px 22px;
+        font-size: 1.08em;
+        font-weight: 600;
+        border: none;
+        border-radius: 6px;
+        background: linear-gradient(90deg, #4caf50 60%, #388e3c 100%);
+        color: #fff;
+        box-shadow: 0 2px 8px rgba(76, 175, 80, 0.08);
+        cursor: pointer;
+        transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+        letter-spacing: 0.5px;
+      }
+
+      .form-section button:hover:not(:disabled) {
+        background: linear-gradient(90deg, #43a047 60%, #2e7d32 100%);
+        transform: translateY(-2px) scale(1.03);
+        box-shadow: 0 4px 16px rgba(56, 142, 60, 0.13);
+      }
+
+      .form-section button:active:not(:disabled) {
+        background: linear-gradient(90deg, #388e3c 60%, #1b5e20 100%);
+        transform: scale(0.98);
+      }
+
+      .form-section button:disabled {
+        background: #bdbdbd !important;
+        color: #eee !important;
+        cursor: not-allowed;
+        opacity: 0.7;
+      }
+
+      .form-section button:last-child {
+        background: linear-gradient(90deg, #757575 60%, #424242 100%);
+        color: #fff;
+      }
+
+      .form-section button:last-child:hover:not(:disabled) {
+        background: linear-gradient(90deg, #616161 60%, #212121 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <header><h1>Cart Summary</h1></header>
+    <nav>
+      <a href="index.html">Home</a> |
+      <a href="menu.html">Back to Menu</a>
+    </nav>
+
+    <section class="section">
+      <div class="card" id="cartSummary">Loading cart...</div>
+
+      <div class="card form-section">
+        <h3>Choose Order Type</h3>
+        <div class="order-type-group">
+          <label class="order-type-label">
+            <input
+              type="radio"
+              name="orderType"
+              value="delivery"
+              checked
+              onchange="toggleOrderDetails()"
+            />
+            <span class="custom-radio"></span>
+            Delivery
+          </label>
+          <label class="order-type-label">
+            <input
+              type="radio"
+              name="orderType"
+              value="dinein"
+              onchange="toggleOrderDetails()"
+            />
+            <span class="custom-radio"></span>
+            Dine-in
+          </label>
+        </div>
+
+        <div id="deliveryForm">
+          <label for="address">Delivery Address:</label>
+          <textarea
+            id="address"
+            rows="3"
+            placeholder="Enter full address here..."
+          ></textarea>
+        </div>
+
+        <div id="tableForm" hidden>
+          <label for="tableNumber">Table Number:</label>
+          <input
+            type="number"
+            id="tableNumber"
+            placeholder="Enter your table number"
+          />
+        </div>
+
+        <button onclick="finalizeOrder()">Proceed to Payment</button>
+        <button onclick="viewDeliveryStatus()">View Delivery Status</button>
+        <button
+          onclick="clearCart()"
+          style="background-color: #999; margin-top: 10px"
+        >
+          Clear Cart
+        </button>
+      </div>
+    </section>
+
+    <footer>&copy; 2025 Quick & Smart Restaurant</footer>
+
+    <script>
+      function toggleOrderDetails() {
+        const orderType = document.querySelector(
+          'input[name="orderType"]:checked'
+        ).value;
+        if (orderType === "delivery") {
+          document.getElementById("deliveryForm").hidden = false;
+          document.getElementById("tableForm").hidden = true;
+        } else {
+          document.getElementById("deliveryForm").hidden = true;
+          document.getElementById("tableForm").hidden = false;
+        }
+      }
+
+      function loadCart() {
+        const cart = JSON.parse(localStorage.getItem("cart")) || [];
+        const cartDiv = document.getElementById("cartSummary");
+
+        if (cart.length === 0) {
+          cartDiv.innerHTML = "<p>Your cart is empty.</p>";
+          // Disable buttons when cart is empty
+          document
+            .querySelectorAll('button:not([onclick="clearCart()"])')
+            .forEach((btn) => {
+              btn.disabled = true;
+              btn.style.opacity = 0.5;
+            });
+          return;
+        }
+
+        let html = `<table>
+          <tr>
+            <th>Item</th>
+            <th>Quantity</th>
+            <th>Price</th>
+            <th>Total</th>
+          </tr>`;
+        let subtotal = 0;
+
+        cart.forEach((item) => {
+          // Handle both qty and quantity properties for compatibility
+          const quantity = item.qty || item.quantity || 0;
+          const itemTotal = quantity * item.price;
+          subtotal += itemTotal;
+          html += `<tr>
+                  <td>${item.name}</td>
+                  <td>${quantity}</td>
+                  <td>₹${item.price}</td>
+                  <td>₹${itemTotal}</td>
+                </tr>`;
+        });
+
+        const tax = Math.round(subtotal * 0.1);
+        const total = subtotal + tax;
+
+        html += `<tr><td colspan="3" class="summary">Subtotal</td><td>₹${subtotal}</td></tr>`;
+        html += `<tr><td colspan="3" class="summary">Tax (10%)</td><td>₹${tax}</td></tr>`;
+        html += `<tr><td colspan="3" class="summary">Total</td><td>₹${total}</td></tr>`;
+        html += "</table>";
+
+        cartDiv.innerHTML = html;
+
+        // Enable buttons when cart has items
+        document.querySelectorAll("button").forEach((btn) => {
+          btn.disabled = false;
+          btn.style.opacity = 1;
+        });
+      }
+
+      function finalizeOrder() {
+        const cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+        // Check if cart is empty
+        if (cart.length === 0) {
+          alert(
+            "Your cart is empty. Please add items before proceeding to payment."
+          );
+          return;
+        }
+
+        const orderType = document.querySelector(
+          'input[name="orderType"]:checked'
+        ).value;
+
+        if (orderType === "delivery") {
+          const address = document.getElementById("address").value.trim();
+          if (!address) {
+            alert("Please enter your delivery address.");
+            return;
+          }
+          localStorage.setItem("orderType", "delivery");
+          localStorage.setItem("deliveryAddress", address);
+        } else {
+          const table = document.getElementById("tableNumber").value.trim();
+          if (!table) {
+            alert("Please enter your table number.");
+            return;
+          }
+          localStorage.setItem("orderType", "dinein");
+          localStorage.setItem("tableNumber", table);
+
+          // Standardize the cart data before storing
+          const standardizedCart = cart.map((item) => ({
+            name: item.name,
+            price: item.price,
+            qty: item.qty || item.quantity || 0,
+            foodId: item.foodId,
+          }));
+
+          localStorage.setItem(
+            `dinein_cart_table_${table}`,
+            JSON.stringify(standardizedCart)
+          );
+        }
+
+        // Calculate totals
+        let subtotal = 0;
+        cart.forEach((item) => {
+          const quantity = item.qty || item.quantity || 0;
+          subtotal += quantity * item.price;
+        });
+
+        const tax = Math.round(subtotal * 0.1);
+        const total = subtotal + tax;
+
+        localStorage.setItem("paymentSubtotal", subtotal);
+        localStorage.setItem("paymentTax", tax);
+        localStorage.setItem("paymentTotal", total);
+
+        alert("Order placed!\nProceeding to payment.");
+        localStorage.removeItem("cart");
+        window.location.href = "payments.html";
+      }
+
+      function clearCart() {
+        localStorage.removeItem("cart");
+        loadCart();
+      }
+
+      function viewDeliveryStatus() {
+        const cart = JSON.parse(localStorage.getItem("cart")) || [];
+        if (cart.length === 0) {
+          alert(
+            "Your cart is empty. Please add items before checking delivery status."
+          );
+          return;
+        }
+        alert("Delivery status tracking feature coming soon!");
+      }
+
+      window.onload = function () {
+        loadCart();
+        toggleOrderDetails();
+      };
+
+      const userRole = localStorage.getItem("role");
+      const userId = localStorage.getItem("userId");
+      const customerDetailsKey = `customerDetailsFilled_${userId}`;
+      const customerDetailsFilled =
+        localStorage.getItem(customerDetailsKey) === "true";
+
+      // Hide Discounts link for customers (non-admins)
+      const discountsLink = document.getElementById("discountsLink");
+      if (discountsLink && userRole !== "admin") {
+        discountsLink.style.display = "none";
+      }
+
+      // Hide Customers link for users who have filled details
+      const customersLink = document.getElementById("customerNav");
+      if (customersLink && customerDetailsFilled) {
+        customersLink.style.display = "none";
+      }
+    </script>
+  </body>
+</html>
