@@ -112,7 +112,13 @@
       <div class="form-container">
         <div class="discount-group">
           <label for="enteredDiscountId">Enter Discount ID:</label>
-          <input type="text" id="enteredDiscountId" placeholder="e.g. DISC10" />
+          <input
+            type="number"
+            id="enteredDiscountId"
+            placeholder="e.g. 12345"
+            min="1"
+            step="1"
+          />
           <button id="applyDiscountBtn" onclick="applyDiscountAndUpdate()">
             Apply
           </button>
@@ -144,6 +150,12 @@
           .value.trim();
         let discountPercent = 0;
         let discountTried = false;
+
+        // Restrict to numeric only
+        if (enteredDiscountId && !/^\d+$/.test(enteredDiscountId)) {
+          alert("Please enter a valid numeric Discount ID.");
+          return;
+        }
 
         if (enteredDiscountId) {
           discountTried = true;
