@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Orders</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      /* Add custom styles if needed */
+      .summary {
+        font-weight: bold;
+        text-align: right;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 15px;
+      }
+      th,
+      td {
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+        text-align: left;
+      }
+      th {
+        background-color: #f4f4f4;
+      }
+    </style>
+  </head>
+  <body>
+    <header><h1>Order Details</h1></header>
+    <nav><a href="index.html">Home</a></nav>
+
+    <section class="section">
+      <div class="card" id="cartSummary">Loading cart...</div>
+    </section>
+
+    <footer>&copy; 2025 Quick & Smart Restaurant</footer>
+
+    <script>
+      // Function to load the cart and display order details
+      function loadCart() {
+        const cart = JSON.parse(localStorage.getItem("cart")) || [];
+        const cartDiv = document.getElementById("cartSummary");
+
+        if (cart.length === 0) {
+          cartDiv.innerHTML = "<p>Your cart is empty.</p>";
+          return;
+        }
+
+        let html =
+          "<table><tr><th>Order No</th><th>Food ID</th><th>Item</th><th>Quantity</th><th>Price</th><th>Total</th></tr>";
+        let subtotal = 0;
+
+        cart.forEach((item, index) => {
+          const itemTotal = item.qty * item.price;
+          subtotal += itemTotal;
+          // Corrected HTML string interpolation using backticks
+          html += `<tr>
+                  <td>#${index + 1}</td> <!-- Displaying Order No -->
+                  <td>${item.foodId}</td> <!-- Displaying Food ID -->
+                  <td>${item.name}</td>
+                  <td>${item.qty}</td>
+                  <td>₹${item.price}</td>
+                  <td>₹${itemTotal}</td>
+                </tr>`;
+        });
+
+        const tax = Math.round(subtotal * 0.1);
+        const total = subtotal + tax;
+
+        html += `<tr>
+  <td colspan="5" class="summary">Subtotal</td>
+  <td>₹${subtotal}</td>
+</tr>`;
+        html += `<tr>
+  <td colspan="5" class="summary">Tax (10%)</td>
+  <td>₹${tax}</td>
+</tr>`;
+        html += `<tr>
+  <td colspan="5" class="summary">Total</td>
+  <td>₹${total}</td>
+</tr>`;
+        html += "</table>";
+
+        cartDiv.innerHTML = html;
+      }
+
+      // Function to finalize the order
+      function finalizeOrder() {
+        const orderType = document.querySelector(
+          'input[name="orderType"]:checked'
+        ).value;
+        let info = "";
+
+        if (orderType === "delivery") {
+          const address = document.getElementById("address").value.trim();
+          if (!address) {
+            alert("Please enter your delivery address.");
+            return;
+          }
+          localStorage.setItem("orderType", "delivery");
+          localStorage.setItem("deliveryAddress", address);
+          info = `Order placed for Delivery.\nAddress: ${address}`;
+        } else {
+          const table = document.getElementById("tableNumber").value.trim();
+          if (!table) {
+            alert("Please enter your table number.");
+            return;
+          }
+          localStorage.setItem("orderType", "dinein");
+          localStorage.setItem("tableNumber", table);
+          info = `Order placed for Dine-in.\nTable Number: ${table}`;
+        }
+
+        const cart = JSON.parse(localStorage.getItem("cart")) || [];
+        let subtotal = 0;
+        cart.forEach((item) => (subtotal += item.qty * item.price));
+        const tax = Math.round(subtotal * 0.1);
+        const total = subtotal + tax;
+
+        localStorage.setItem("paymentSubtotal", subtotal);
+        localStorage.setItem("paymentTax", tax);
+        localStorage.setItem("paymentTotal", total);
+
+        alert(info + "\nThank you for ordering!");
+        window.location.href = "payments.html"; // Proceed to Payment
+      }
+
+      // Helper to parse URL parameters
+      function getUrlParams() {
+        const params = new URLSearchParams(window.location.search);
+        return {
+          orderNo: params.get("orderNo"),
+          amount: params.get("amount"),
+          items: params.get("items"),
+        };
+      }
+
+      // If URL has order info, show summary from URL, else show cart
+      function showOrderFromParamsOrCart() {
+        const { orderNo, amount, items } = getUrlParams();
+        const cartDiv = document.getElementById("cartSummary");
+
+        if (orderNo && amount && items) {
+          // Show order summary from QR scan
+          let html = `<h2>Order Confirmed!</h2>
+          <table>
+            <tr><th>Order No</th><td>${orderNo}</td></tr>
+            <tr><th>Total Amount</th><td>₹${amount}</td></tr>
+            <tr><th>Items</th><td><ul>`;
+          items.split(",").forEach((i) => {
+            const [name, qty] = i.split(":");
+            html += `<li>${decodeURIComponent(name)} x ${qty}</li>`;
+          });
+          html += `</ul></td></tr></table>
+          <p style="color:green;font-weight:bold;">Thank you for your order!</p>`;
+          cartDiv.innerHTML = html;
+        } else {
+          // Fallback: show cart as before
+          loadCart();
+        }
+      }
+
+      // Add this function and call it after payment is successful
+      async function storeOrderInDB() {
+        const cart = JSON.parse(localStorage.getItem("cart")) || [];
+        const orderNo =
+          localStorage.getItem("orderNo") ||
+          Math.floor(100000 + Math.random() * 900000);
+        const passportId = localStorage.getItem("passport_id") || "UNKNOWN";
+        const discountId = localStorage.getItem("discountId") || null;
+        const totalAmount = localStorage.getItem("paymentTotal") || 0;
+
+        try {
+          const response = await fetch("http://localhost:3000/api/orders", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              orderNo,
+              passportId,
+              discountId,
+              cart,
+              totalAmount,
+            }),
+          });
+          const data = await response.json();
+          console.log(data.message);
+        } catch (err) {
+          alert("Failed to store order in database.");
+          console.error(err);
+        }
+      }
+
+      // Load the cart on page load
+      window.onload = showOrderFromParamsOrCart;
+
+      // Set a timestamp when order is placed
+      if (!localStorage.getItem("orderPlacedAt")) {
+        localStorage.setItem("orderPlacedAt", Date.now());
+      }
+
+      // Check and clear cart after 30 minutes (1800000 ms)
+      setInterval(() => {
+        const placedAt = parseInt(localStorage.getItem("orderPlacedAt"), 10);
+        if (placedAt && Date.now() - placedAt > 1800000) {
+          localStorage.removeItem("cart");
+          localStorage.removeItem("orderPlacedAt");
+          document.getElementById("cartSummary").innerHTML =
+            "<p>Your cart has expired. Please place a new order.</p>";
+        }
+      }, 60000); // Check every minute
+    </script>
+  </body>
+</html>
