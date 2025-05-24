@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Quick & Smart Restaurant</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <!-- <link rel="stylesheet" href="style.css" /> -->
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Poppins", sans-serif;
+        background: url("https://images.unsplash.com/photo-1600891964599-f61ba0e24092")
+          no-repeat center center fixed;
+        background-size: cover;
+        color: white;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      header {
+        background-color: rgba(0, 0, 0, 0.7);
+        text-align: center;
+        padding: 2rem 1rem;
+        backdrop-filter: blur(6px);
+        border-bottom: 2px solid #ffb703;
+      }
+
+      header h1 {
+        font-size: 2.5rem;
+        color: #ffb703;
+        letter-spacing: 1px;
+      }
+
+      nav {
+        background-color: rgba(0, 0, 0, 0.6);
+        padding: 1rem;
+        text-align: center;
+      }
+
+      nav a {
+        margin: 0 20px;
+        text-decoration: none;
+        color: #f1f1f1;
+        font-weight: 600;
+        transition: color 0.3s ease;
+        position: relative;
+      }
+
+      nav a::after {
+        content: "";
+        display: block;
+        height: 2px;
+        width: 0;
+        background: #ffb703;
+        transition: width 0.3s;
+        position: absolute;
+        bottom: -5px;
+        left: 0;
+      }
+
+      nav a:hover {
+        color: #ffb703;
+      }
+
+      nav a:hover::after {
+        width: 100%;
+      }
+
+      .section {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .glass-box {
+        background: rgba(0, 0, 0, 0.5); /* Black with transparency */
+        border-radius: 20px;
+        padding: 3rem;
+        max-width: 700px;
+        text-align: center;
+        border: none;
+        color: #ffd166;
+      }
+
+      .glass-box h2 {
+        color: #ffd166;
+      }
+
+      .glass-box p {
+        color: white;
+      }
+
+      footer {
+        background-color: rgba(0, 0, 0, 0.7);
+        text-align: center;
+        padding: 1rem;
+        color: #ccc;
+        font-size: 0.9rem;
+        border-top: 1px solid #444;
+      }
+
+      @media (max-width: 768px) {
+        nav a {
+          display: block;
+          margin: 10px 0;
+        }
+
+        .glass-box {
+          padding: 2rem;
+          margin: 1rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Quick & Smart Restaurant Management</h1>
+    </header>
+
+    <nav>
+      <a href="menu.html">Menu</a>
+      <a href="discounts.html" id="discountsLink">Discounts</a>
+      <a href="customers.html" id="customerNav">Customers</a>
+      <a href="orders.html">Orders</a>
+      <a href="cart.html">Cart</a>
+      <a href="delivery.html">Delivery</a>
+      <a href="payments.html">Payments</a>
+      <a href="signout.html">Signout</a>
+    </nav>
+
+    <section class="section">
+      <div class="glass-box">
+        <h2>Welcome to Quick & Smart Restaurant</h2>
+        <p>
+          Manage all your restaurant operations seamlessly in one beautiful,
+          modern interface. From menu to payments — all in one place.
+        </p>
+      </div>
+    </section>
+
+    <footer>&copy; 2025 Quick & Smart Restaurant</footer>
+
+    <script>
+      const userRole = localStorage.getItem("role");
+      const userId = localStorage.getItem("userId");
+      const customerDetailsKey = `customerDetailsFilled_${userId}`;
+      const customerDetailsFilled =
+        localStorage.getItem(customerDetailsKey) === "true";
+
+      // Hide Discounts link for customers (non-admins)
+      const discountsLink = document.getElementById("discountsLink");
+      if (discountsLink && userRole !== "admin") {
+        discountsLink.style.display = "none";
+      }
+
+      // Hide Customers link for users who have filled details
+      const customersLink = document.getElementById("customerNav");
+      if (customersLink && customerDetailsFilled) {
+        customersLink.style.display = "none";
+      }
+    </script>
+  </body>
+</html>
