@@ -130,6 +130,14 @@
 
       <!-- Delivery or Dine-in Cart -->
       <div class="card" id="orderDetails">Order items will appear here...</div>
+
+      <!-- Add this button below the payment summary table, inside your <section> -->
+      <button
+        id="paymentSuccessBtn"
+        style="margin: 20px auto; display: block; font-size: 1.1rem"
+      >
+        Payment Successful
+      </button>
     </section>
 
     <footer>&copy; 2025 Quick & Smart Restaurant</footer>
@@ -159,11 +167,14 @@
 
         if (enteredDiscountId) {
           discountTried = true;
-          const response = await fetch("/api/discounts/consume", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ discountId: enteredDiscountId }),
-          });
+          const response = await fetch(
+            "http://localhost:3000/api/discounts/consume",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ discountId: enteredDiscountId }),
+            }
+          );
           const data = await response.json();
           console.log("Discount API response:", data);
           if (data.valid) {
@@ -225,9 +236,16 @@
 
         // Payment Summary
         const summaryDiv = document.getElementById("paymentSummary");
-        // Generate QR code URL with the final amount
-        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=&#8377;${encodeURIComponent(
-          finalTotal
+        // Prepare order info for QR code URL
+        const orderNo = localStorage.getItem("orderNo") || "Not Available";
+        const items = cart
+          .map((item) => `${encodeURIComponent(item.name)}:${item.qty}`)
+          .join(",");
+        const qrOrderUrl = `http://192.168.1.5:5500/orders.html?orderNo=${orderNo}&amount=${finalTotal}&items=${items}`;
+
+        // Generate QR code for this URL
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(
+          qrOrderUrl
         )}`;
         summaryDiv.innerHTML = `<table>
     <tr><th>Payment ID</th><td>${
@@ -250,6 +268,94 @@
       document.addEventListener("DOMContentLoaded", function () {
         applyDiscountAndUpdate();
       });
+
+      // Place this after your applyDiscountAndUpdate function
+      document.getElementById("paymentSuccessBtn").onclick = async function () {
+        // Get the latest order info
+        const cart = JSON.parse(localStorage.getItem("cart")) || [];
+        const orderNo =
+          localStorage.getItem("orderNo") ||
+          Math.floor(100000 + Math.random() * 900000);
+        const discountId = localStorage.getItem("discountId") || null;
+
+        // Calculate final total and items
+        let subtotal = 0;
+        cart.forEach((item) => {
+          const quantity = item.qty || item.quantity || 0;
+          subtotal += quantity * item.price;
+        });
+        const tax = Math.round(subtotal * 0.1);
+        let totalBeforeDiscount = subtotal + tax;
+
+        // Get discount percent (if any)
+        const enteredDiscountId = document
+          .getElementById("enteredDiscountId")
+          .value.trim();
+        let discountPercent = 0;
+        if (enteredDiscountId && !isNaN(enteredDiscountId)) {
+          const discountCell = document.querySelector(
+            "#paymentSummary tr:nth-child(6) td"
+          );
+          if (discountCell && discountCell.textContent.includes("%")) {
+            discountPercent = parseFloat(discountCell.textContent) || 0;
+          }
+        }
+        const discountAmount = Math.round(
+          totalBeforeDiscount * (discountPercent / 100)
+        );
+        const finalTotal = totalBeforeDiscount - discountAmount;
+
+        // Fetch any valid passport_id from backend
+        let passportId = null;
+        try {
+          const resp = await fetch(
+            "http://localhost:3000/api/customer/any-passport"
+          );
+          const data = await resp.json();
+          if (resp.ok && data.passportId) {
+            passportId = data.passportId;
+          } else {
+            alert(
+              "No customer found in database. Please add a customer first."
+            );
+            return;
+          }
+        } catch (err) {
+          alert("Failed to fetch customer Passport ID.");
+          return;
+        }
+
+        // Store order in DB
+        try {
+          const response = await fetch("http://localhost:3000/api/orders", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              orderNo,
+              passportId,
+              discountId,
+              cart,
+              totalAmount: finalTotal,
+            }),
+          });
+          const result = await response.json();
+          if (response.ok) {
+            // Redirect to orders.html with params
+            const items = cart
+              .map((item) => `${encodeURIComponent(item.name)}:${item.qty}`)
+              .join(",");
+            window.location.href = `orders.html?orderNo=${orderNo}&amount=${finalTotal}&items=${items}`;
+          } else {
+            alert(
+              "Failed to store order in database: " +
+                (result.error || "Unknown error")
+            );
+          }
+        } catch (err) {
+          alert("Failed to store order in database.");
+          console.error(err);
+        }
+      };
     </script>
   </body>
 </html>
